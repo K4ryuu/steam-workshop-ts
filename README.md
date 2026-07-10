@@ -313,6 +313,22 @@ bun run lint      # eslint on src, test, examples
 bun run type-check
 ```
 
+## Security & capabilities
+
+Supply-chain scanners (e.g. Socket) flag this package for **network** and **shell** access. Both are intrinsic to what it does, and are limited to the following:
+
+- **Network**: HTTPS requests to the official Steam Web API (`api.steampowered.com`) for item/collection data, and to the Steam CDN (`steamcdn-a.akamaihd.net`) when `autoInstall` downloads SteamCMD. All URLs are hardcoded; nothing is fetched from user input.
+- **Shell / child processes**: it spawns the `steamcmd` (or `docker`) process to perform downloads, and runs `tar`/`powershell` to extract SteamCMD and `df`/`powershell` to check free disk space.
+
+Hardening in place:
+
+- Every subprocess uses `execFile`/`spawn` with **argument arrays, never a shell string**, so paths and options can't be interpreted as shell commands (no command injection).
+- No dynamic code evaluation, no obfuscation, no telemetry, and zero runtime dependencies.
+
+If you don't need SteamCMD downloads, importing only `SteamWorkshopClient` keeps you on the Web API surface (network only, no child processes).
+
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
+
 ## Contributing
 
 Please check [CONTRIBUTING.md](CONTRIBUTING.md) for details.
