@@ -21,13 +21,13 @@ function getPackageVersion(): string {
 
 function printHelp(): void {
   console.log(`
-\x1b[36msteam-workshop CLI\x1b[0m - Steam Workshop Web API + SteamCMD automation
+\x1b[36msteam-workshop-ts CLI\x1b[0m - Steam Workshop Web API + SteamCMD automation
 
 \x1b[1mUsage:\x1b[0m
-  steam-workshop info <id...>
-  steam-workshop query <appId> <search...> [--type <n>] [--page <n>] [--per-page <n>]
-  steam-workshop collection <collectionId>
-  steam-workshop download <appId> <targetDir> <id...> [--docker] [--temp] [--cache-dir <dir>] [--username <u>] [--password <p>]
+  steam-workshop-ts info <id...>
+  steam-workshop-ts query <appId> <search...> [--type <n>] [--page <n>] [--per-page <n>]
+  steam-workshop-ts collection <collectionId>
+  steam-workshop-ts download <appId> <targetDir> <id...> [--docker] [--temp] [--cache-dir <dir>] [--username <u>] [--password <p>]
 
 \x1b[1mOptions:\x1b[0m
   --type <n>        Query type (0 vote, 1 date, 3 trend, 9 accepted). Default: 0
@@ -44,10 +44,10 @@ function printHelp(): void {
   STEAM_API_KEY     Steam Web API key, required for 'query'
 
 \x1b[1mExamples:\x1b[0m
-  steam-workshop info 3070244462
-  steam-workshop query 730 surf --per-page 10
-  steam-workshop collection 2753947063
-  steam-workshop download 730 ./addons 3070244462 --docker
+  steam-workshop-ts info 3070244462
+  steam-workshop-ts query 730 surf --per-page 10
+  steam-workshop-ts collection 2753947063
+  steam-workshop-ts download 730 ./addons 3070244462 --docker
 `);
 }
 
@@ -157,7 +157,7 @@ function printItem(item: PublishedFileDetails): void {
 async function cmdInfo(args: ParsedArgs): Promise<void> {
   const ids = args.positional;
   if (ids.length === 0)
-    fail("Usage: steam-workshop info <id...>");
+    fail("Usage: steam-workshop-ts info <id...>");
 
   const client = new SteamWorkshopClient();
   const details = await client.getItemDetails(ids);
@@ -171,7 +171,7 @@ async function cmdInfo(args: ParsedArgs): Promise<void> {
 async function cmdQuery(args: ParsedArgs): Promise<void> {
   const [appId, ...searchParts] = args.positional;
   if (!appId)
-    fail("Usage: steam-workshop query <appId> <search...>");
+    fail("Usage: steam-workshop-ts query <appId> <search...>");
 
   const apiKey = process.env.STEAM_API_KEY;
   if (!apiKey)
@@ -205,7 +205,7 @@ async function cmdQuery(args: ParsedArgs): Promise<void> {
 async function cmdCollection(args: ParsedArgs): Promise<void> {
   const [collectionId] = args.positional;
   if (!collectionId)
-    fail("Usage: steam-workshop collection <collectionId>");
+    fail("Usage: steam-workshop-ts collection <collectionId>");
 
   const client = new SteamWorkshopClient();
   const items = await client.getCollectionItems(collectionId);
@@ -220,7 +220,7 @@ async function cmdCollection(args: ParsedArgs): Promise<void> {
 async function cmdDownload(args: ParsedArgs): Promise<void> {
   const [appId, targetDir, ...ids] = args.positional;
   if (!appId || !targetDir || ids.length === 0)
-    fail("Usage: steam-workshop download <appId> <targetDir> <id...>");
+    fail("Usage: steam-workshop-ts download <appId> <targetDir> <id...>");
 
   const steamOptions: SteamCmdOptions = {
     useDocker: args.flags.has("--docker"),

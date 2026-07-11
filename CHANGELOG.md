@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.0.1] - 2026-07-11
+
+### Changed
+
+- Renamed the CLI bin from `steam-workshop` to `steam-workshop-ts` to match the package name (so `npx steam-workshop-ts` and the installed command are consistent).
+
 ## [1.0.0] - 2026-07-11
 
 - Initial release

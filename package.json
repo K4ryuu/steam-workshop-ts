@@ -1,6 +1,6 @@
 {
   "name": "steam-workshop-ts",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "type": "module",
   "description": "Zero-dependency TypeScript client for the Steam Workshop Web API and SteamCMD, for Node.js and Bun. Query and search workshop items, resolve collections, and download/update items with caching, disk-space checks and a CLI.",
   "main": "dist/index.cjs",
@@ -10,7 +10,7 @@
     "dist"
   ],
   "bin": {
-    "steam-workshop": "./dist/cli.js"
+    "steam-workshop-ts": "./dist/cli.js"
   },
   "exports": {
     ".": {

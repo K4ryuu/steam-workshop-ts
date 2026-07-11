@@ -40,7 +40,7 @@ It runs on Node.js and Bun with absolutely zero runtime dependencies.
 - **Zero runtime dependencies** - Only development dependencies are used.
 - **Smart path parser** - Automatically starts a SteamCMD subprocess, downloads files, parses stdout, and returns the absolute directory path of the downloaded workshop item.
 - **Caching & incremental updates** - Manifest-based cache with pre-flight disk-space checks, plus an optional persistent Steam depot cache (`steamCacheDir`) for fast, low-bandwidth re-downloads.
-- **Batteries included** - A `steam-workshop` CLI, automatic retries with backoff, Steam Guard 2FA support, collection resolution, and Docker/temp-dir sandbox modes (macOS-friendly).
+- **Batteries included** - A `steam-workshop-ts` CLI, automatic retries with backoff, Steam Guard 2FA support, collection resolution, and Docker/temp-dir sandbox modes (macOS-friendly).
 - **Supports Bun and Node.js** - Fully cross-compatible, with complete type safety over Steam's query and details responses.
 
 ## Installation
@@ -242,14 +242,14 @@ console.log(`Freed ${removed.length} stale item(s).`);
 
 ## CLI
 
-Installed as `steam-workshop` (also runnable with `npx steam-workshop`):
+Installed as the `steam-workshop-ts` command (or run without installing via `npx steam-workshop-ts`):
 
 ```bash
-steam-workshop info 3070244462                       # metadata for one or more item IDs
-steam-workshop query 730 surf --per-page 10          # search (needs STEAM_API_KEY)
-steam-workshop collection 2753947063                 # list a collection's items
-steam-workshop download 730 ./addons 3070244462 --docker   # download into ./addons
-steam-workshop download 730 ./addons 3070244462 --docker --cache-dir ./.steam-cache  # incremental
+steam-workshop-ts info 3070244462                       # metadata for one or more item IDs
+steam-workshop-ts query 730 surf --per-page 10          # search (needs STEAM_API_KEY)
+steam-workshop-ts collection 2753947063                 # list a collection's items
+steam-workshop-ts download 730 ./addons 3070244462 --docker   # download into ./addons
+steam-workshop-ts download 730 ./addons 3070244462 --docker --cache-dir ./.steam-cache  # incremental
 ```
 
 `query` reads the Steam Web API key from the `STEAM_API_KEY` environment variable. `download` accepts `--docker`, `--temp`, `--cache-dir <dir>`, `--username` and `--password`, and shows a spinner with elapsed time plus the final average speed.
