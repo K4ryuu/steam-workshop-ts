@@ -1,9 +1,11 @@
 import { execFile } from "child_process";
 
 /**
- * Returns the free disk space of the disk containing the specified path (in bytes).
- * Falls back to Infinity if the check fails, so callers never block a download on a
- * failed probe. Uses `execFile` (no shell) so the path can't be interpreted by a shell.
+ * Returns the free disk space of the disk containing the specified path, in bytes.
+ * Uses `execFile` (no shell) so the path can't be interpreted by a shell.
+ *
+ * @param path - a path on the disk to probe
+ * @returns the free bytes, or `Infinity` if the probe fails (so callers never block on it)
  */
 export function getFreeDiskSpace(path: string): Promise<number> {
   return new Promise((resolve) => {

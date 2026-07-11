@@ -3,6 +3,7 @@ import { writeFileSync, mkdirSync, chmodSync, unlinkSync, rmSync, mkdtempSync } 
 import { join } from "path";
 import { tmpdir } from "os";
 
+/** Configuration for a {@link SteamCmdWrapper} instance. */
 export interface SteamCmdOptions {
   /**
    * Path to the steamcmd executable.
@@ -42,6 +43,7 @@ export interface SteamCmdOptions {
   steamCacheDir?: string;
 }
 
+/** Download progress parsed from SteamCMD output during a download. */
 export interface DownloadProgress {
   /** Item ID this progress refers to, when a single item is being downloaded. */
   itemId?: number;
@@ -55,6 +57,7 @@ export interface DownloadProgress {
   raw: string;
 }
 
+/** Per-run options for a SteamCMD download. */
 export interface DownloadOptions {
   /**
    * Timeout in milliseconds before killing the SteamCMD process.
@@ -130,7 +133,11 @@ export class SteamCmdWrapper {
    * directory that is NOT auto-removed, so the path stays valid. Copy the files out
    * yourself, or use `SteamWorkshopClient.downloadItemCached` which copies and cleans up.
    *
-   * @returns Absolute path to the downloaded folder.
+   * @param appId - the game's App ID
+   * @param itemId - the workshop item ID
+   * @param options - timeout, progress, Steam Guard callback, and per-run sandbox mode
+   * @returns the absolute path to the downloaded folder
+   * @throws if SteamCMD fails, times out, or reports no successful download
    */
   public async downloadItem(appId: number, itemId: number, options: DownloadOptions = {}): Promise<string> {
     const { paths } = await this.downloadItemsManaged(appId, [itemId], options);
@@ -149,7 +156,11 @@ export class SteamCmdWrapper {
    * auto-removed (see {@link downloadItem}). Prefer {@link downloadItemsManaged}
    * when you need the temp dirs cleaned after copying the files out.
    *
-   * @returns A map of Item ID to its absolute download path on the host.
+   * @param appId - the game's App ID
+   * @param itemIds - the workshop item IDs to download
+   * @param options - timeout, progress, Steam Guard callback, and per-run sandbox mode
+   * @returns a map of Item ID to its absolute download path
+   * @throws if SteamCMD fails, times out, or reports no successful download
    */
   public async downloadItems(
     appId: number,
@@ -165,6 +176,12 @@ export class SteamCmdWrapper {
    * The paths may point into a sandbox temp directory (Docker mount or temporary
    * SteamCMD install); call `cleanup()` after copying the files out to remove it.
    * On failure the sandbox is removed automatically before the error is thrown.
+   *
+   * @param appId - the game's App ID
+   * @param itemIds - the workshop item IDs to download
+   * @param options - timeout, progress, Steam Guard callback, and per-run sandbox mode
+   * @returns the download paths plus a `cleanup()` to remove the sandbox temp dir
+   * @throws if SteamCMD fails, times out, or reports no successful download
    */
   public async downloadItemsManaged(
     appId: number,
@@ -424,8 +441,9 @@ export class SteamCmdWrapper {
    * Downloads, extracts, and installs SteamCMD to a target directory.
    * Updates the wrapper's `binPath` to point to the installed executable.
    *
-   * @param targetDir Directory where SteamCMD should be installed.
-   * @returns Absolute path to the installed SteamCMD executable.
+   * @param targetDir - directory where SteamCMD should be installed
+   * @returns the absolute path to the installed SteamCMD executable
+   * @throws if the download, extraction, or permission step fails
    */
   public async autoInstall(targetDir: string): Promise<string> {
     const platform = process.platform;

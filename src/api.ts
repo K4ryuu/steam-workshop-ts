@@ -4,6 +4,7 @@ import { SteamCmdWrapper } from "./steamcmd.js";
 import type { DownloadOptions } from "./steamcmd.js";
 import { getFreeDiskSpace } from "./utils.js";
 
+/** Metadata for a Steam Workshop item, as returned by the Web API. */
 export interface PublishedFileDetails {
   publishedfileid: string;
   result: number;
@@ -31,6 +32,7 @@ export interface PublishedFileDetails {
   tags?: { tag: string }[];
 }
 
+/** Options for searching/filtering the Workshop via `queryItems`. */
 export interface QueryItemsOptions {
   /** Steam Web API Key. Required for query queries. */
   apiKey?: string;
@@ -52,11 +54,13 @@ export interface QueryItemsOptions {
   creatorAppId?: number;
 }
 
+/** Result of a Workshop query: the total match count and the returned items. */
 export interface QueryItemsResult {
   total: number;
   items: PublishedFileDetails[];
 }
 
+/** A Workshop collection and its child item references, from the Web API. */
 export interface CollectionDetails {
   publishedfileid: string;
   result: number;
@@ -166,12 +170,13 @@ export class SteamWorkshopClient {
   }
 
   /**
-   * Fetches metadata for specific workshop item(s) by ID.
-   * Automatically chunks requests above the API's per-call limit (100), fetches
-   * chunks in parallel, and serves fresh entries from the memo cache when enabled.
-   * Does NOT require an API key.
+   * Fetches metadata for specific workshop item(s) by ID. Automatically chunks requests
+   * above the API's per-call limit (100), fetches chunks in parallel, and serves fresh
+   * entries from the memo cache when enabled. Does NOT require an API key.
    *
-   * @returns Details in the requested ID order; IDs Steam has no data for are omitted.
+   * @param ids - one item ID or an array of IDs
+   * @returns details in the requested ID order; IDs Steam has no data for are omitted
+   * @throws if a Web API request fails after the configured retries
    */
   public async getItemDetails(ids: string | string[]): Promise<PublishedFileDetails[]> {
     const idArray = Array.isArray(ids) ? ids : [ids];
@@ -236,8 +241,11 @@ export class SteamWorkshopClient {
   }
 
   /**
-   * Queries and searches the Steam Workshop.
-   * Requires a Steam Web API key.
+   * Queries and searches the Steam Workshop via `QueryFiles`.
+   *
+   * @param options - app ID, search text, tags, paging, sort, and an optional per-call API key
+   * @returns the total match count and the returned items
+   * @throws if no API key is available, or the Web API request fails after retries
    */
   public async queryItems(options: QueryItemsOptions): Promise<QueryItemsResult> {
     const apiKey = options.apiKey || this.apiKey;
@@ -285,8 +293,12 @@ export class SteamWorkshopClient {
   }
 
   /**
-   * Fetches the children IDs for a specific workshop collection (or list of collections).
+   * Fetches the child item references for one or many workshop collections.
    * Does NOT require an API key.
+   *
+   * @param ids - one collection ID or an array of IDs
+   * @returns each collection's raw child references
+   * @throws if the Web API request fails after the configured retries
    */
   public async getCollectionDetails(ids: string | string[]): Promise<CollectionDetails[]> {
     const idArray = Array.isArray(ids) ? ids : [ids];
@@ -313,8 +325,12 @@ export class SteamWorkshopClient {
   }
 
   /**
-   * Helper that resolves a collection ID to all its child items' details.
-   * Performs two API calls under the hood: one to fetch children IDs, and one to get item details.
+   * Resolves a collection ID to all its child items' full details. Performs two API calls:
+   * one to fetch the child IDs, and one to fetch their details.
+   *
+   * @param collectionId - the collection's published file ID
+   * @returns the details of every child item (empty if the collection is empty or not found)
+   * @throws if either Web API request fails after the configured retries
    */
   public async getCollectionItems(collectionId: string): Promise<PublishedFileDetails[]> {
     const collections = await this.getCollectionDetails(collectionId);
@@ -327,12 +343,17 @@ export class SteamWorkshopClient {
   }
 
   /**
-   * Downloads a workshop item if the local cached version is missing or outdated.
-   * Compares the Web API's `time_updated` timestamp with the local manifest.
-   * Copies the downloaded content into targetDir/itemId folder and cleans up any
-   * sandbox temp directory used by SteamCMD.
+   * Downloads a workshop item only if the local cached copy is missing or outdated
+   * (comparing the Web API `time_updated` against the local manifest), copies it into
+   * `targetDir/itemId`, and cleans up any SteamCMD sandbox temp directory.
    *
-   * @returns Path to the cached workshop item directory.
+   * @param appId - the game's App ID (e.g. 730 for CS2)
+   * @param itemId - the workshop item ID to download
+   * @param steamcmd - the SteamCMD wrapper to run the download with
+   * @param targetDir - the cache directory to copy the item into
+   * @param options - optional per-run download options (progress, timeout, sandbox mode)
+   * @returns the absolute path to the cached item directory
+   * @throws if the item is not found, disk space is insufficient, or the download fails
    */
   public async downloadItemCached(
     appId: number,
@@ -389,11 +410,17 @@ export class SteamWorkshopClient {
   }
 
   /**
-   * Downloads multiple workshop items if their local cached versions are missing or outdated.
-   * Compares the Web API's `time_updated` timestamps with the local manifest in a single batch,
-   * then copies fresh content in and cleans up the SteamCMD sandbox.
+   * Batched {@link downloadItemCached}: downloads only the items whose cached copies are
+   * missing or outdated, using a single Web API call and a single SteamCMD session, then
+   * copies fresh content in and cleans up the sandbox.
    *
-   * @returns A map of Item ID to its cached directory path on the host.
+   * @param appId - the game's App ID
+   * @param itemIds - the workshop item IDs to ensure are cached
+   * @param steamcmd - the SteamCMD wrapper to run the download with
+   * @param targetDir - the cache directory to copy items into
+   * @param options - optional per-run download options (progress, timeout, sandbox mode)
+   * @returns a map of Item ID to its cached directory path
+   * @throws if an item is not found, disk space is insufficient, or the download fails
    */
   public async downloadItemsCached(
     appId: number,
@@ -477,10 +504,12 @@ export class SteamWorkshopClient {
   }
 
   /**
-   * Removes cached workshop items no longer in `keepIds` from `targetDir`:
-   * deletes each stale item directory and its manifest entry, then rewrites the manifest.
+   * Removes cached workshop items no longer in `keepIds` from `targetDir`: deletes each
+   * stale item directory and its manifest entry, then rewrites the manifest.
    *
-   * @returns The Item IDs that were pruned.
+   * @param targetDir - the cache directory to prune
+   * @param keepIds - the item IDs to keep; everything else is removed
+   * @returns the Item IDs that were pruned
    */
   public pruneCache(targetDir: string, keepIds: number[]): number[] {
     const manifestPath = join(targetDir, "workshop_manifest.json");
